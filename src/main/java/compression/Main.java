@@ -1,14 +1,20 @@
 package compression;
 
 import java.io.*;
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.UnmodifiableClassException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.lang.instrument.Instrumentation;
+import java.util.jar.JarFile;
 
 /**
  * Created by saikat on 4/26/15.
  */
 public class Main {
     static Socket s;
+    int maxSize = 65536;
     private static class ServerWorker extends Thread {
         Socket s = null;
         public ServerWorker(Socket s) {
@@ -34,7 +40,12 @@ public class Main {
                 ObjectInputStream objReader = new ObjectInputStream(new CompressedBlockInputStream(s.getInputStream()));
                 try {
                     Message number = (Message) objReader.readObject();
-                    System.out.println(number.toString());
+                    Job j = (Job)number.getData();
+                    Double[] arr = j.getData();
+                    for (int i = 0; i < arr.length;i++) {
+                        System.out.println(i);
+                    }
+                    //System.out.println(number.toString());
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -100,12 +111,20 @@ public class Main {
         // my implementation
         ObjectOutputStream objWriter = new ObjectOutputStream(compressed);
         //Integer i = 10;
-        Message m = new Message(0, MessageType.HW, i);
+
+        Double[] arr = new Double[1024];
+        for (int c = 0; c < arr.length; c++) {
+            arr[c] = 1.0 + c;
+        }
+
+        Job j = new Job(0,1024, arr);
+        Message m = new Message(0, MessageType.HW, j);
         objWriter.writeObject(m);
     //            objWriter.close();
         objWriter.flush();
         s.close();
     }
+
 
     private static class Server extends Thread {
         int port;
